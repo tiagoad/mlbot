@@ -19,7 +19,7 @@ class MLBot:
     LINE_NAMES = ['Amarela', 'Vermelha', 'Azul', 'Verde']
     STRINGS = {
         "LINE": "Linha",
-        "APPEND": "#metrolisboa"
+        "APPEND": ""
     }
 
     def __init__(self, state_file, api_credentials):
@@ -55,7 +55,7 @@ class MLBot:
             last = self.status.get(line)
 
             if last == None:
-                self.state_change(line, current)
+                pass
 
             elif ((current.ok != last.ok)
                 or (not current.ok and current.message != last.message)):
