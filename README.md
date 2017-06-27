@@ -10,13 +10,13 @@ If an `env` file exists with `KEY=VALUE` mappings for the environment variables:
 
 ## Environment Variables
 
-`BOT_DEBUG` - Debug output if set
-`RUN_INTERVAL` - Interval between runs, in seconds (defaults to 120 seconds)
-`TWITTER_CONSUMER_KEY` - Twitter consumer key
-`TWITTER_CONSUMER_SECRET` - Twitter consumer secret
-`TWITTER_ACCESS_TOKEN_KEY` - Twitter access token
-`TWITTER_ACCESS_TOKEN_SECRET` - Twitter access token secret
+* `BOT_DEBUG` - Debug output if set
+* `RUN_INTERVAL` - Interval between runs, in seconds (defaults to 120 seconds)
+* `TWITTER_CONSUMER_KEY` - Twitter consumer key
+* `TWITTER_CONSUMER_SECRET` - Twitter consumer secret
+* `TWITTER_ACCESS_TOKEN_KEY` - Twitter access token
+* `TWITTER_ACCESS_TOKEN_SECRET` - Twitter access token secret
 
 ## Directories
 
-`/state` - Holds variable state
+* `/state` - Holds variable state
