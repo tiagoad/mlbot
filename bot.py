@@ -55,7 +55,7 @@ class MLBot:
             last = self.status.get(line)
 
             if last == None:
-                pass
+                self.state_change(line, current)
 
             elif ((current.ok != last.ok)
                 or (not current.ok and current.message != last.message)):
@@ -126,8 +126,7 @@ class MLBot:
             message = message[:-(length-140)]
 
         self.log.info('Publishing to Twitter: %s', message)
-
-        #self.twitter.PostUpdate(message)
+        self.twitter.PostUpdate(message)
 
 if __name__ == '__main__':
     # set up logger
