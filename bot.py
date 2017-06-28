@@ -108,6 +108,10 @@ class MLBot:
 
         message = status.message[0].upper() + status.message[1:]
 
+        # add full stop if there's none
+        if not message.endswith('.'):
+            message = message + '.'
+
         self.publish("%s %s %s: %s %s" % (
             emoji,
             self.STRINGS["LINE"],
