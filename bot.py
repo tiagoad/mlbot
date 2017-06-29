@@ -125,12 +125,9 @@ class MLBot:
 
         :param message: Message to publish
         """
-        length = twitter.twitter_utils.calc_expected_status_length(message)
-        if length > 140:
-            message = message[:-(length-140)]
 
         self.log.info('Publishing to Twitter: %s', message)
-        self.twitter.PostUpdate(message)
+        self.twitter.PostUpdates(message, continuation='\u2026')
 
 if __name__ == '__main__':
     # set up logger
