@@ -1,4 +1,4 @@
-FROM python:3.6.1
+FROM python:3.6.1-alpine
 
 # Set the environment variables
 ENV BOT_STATE_FILE /state/status.dat
@@ -11,10 +11,11 @@ RUN mkdir /state
 WORKDIR /usr/src/app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN apk add --no-cache bash
 
 # Copy files
 COPY bot.py .
 COPY run.sh .
 
 # Start container
-CMD ./run.sh
+CMD bash run.sh
