@@ -1,13 +1,20 @@
+import datetime
 import logging
 import os
 import pickle
+import time
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 from enum import Enum
 
 import twitter
+from twitter.error import TwitterError
 
+class Line:
+    def __init__(self, name, emoji):
+        self.name = name
+        self.emoji = emoji
 
 class MLStatus:
     def __init__(self, message, ok):
@@ -16,10 +23,17 @@ class MLStatus:
 
 class MLBot:
     STATUS_URL = 'http://app.metrolisboa.pt/status/estado_Linhas.php'
-    LINE_NAMES = ['Amarela', 'Vermelha', 'Azul', 'Verde']
+    LINES = [
+        Line('Amarela', '\U0001F34B'),
+        Line('Vermelha', '\U000FE051'),
+        Line('Azul', '\U0001F433'),
+        Line('Verde', '\U0001F34F')
+    ]
+
     STRINGS = {
         "LINE": "Linha",
-        "APPEND": ""
+        "UP_EMOJI": "\U0001F535",
+        "DOWN_EMOJI": "\U0001F534"
     }
 
     def __init__(self, state_file, api_credentials):
@@ -55,7 +69,7 @@ class MLBot:
             last = self.status.get(line)
 
             if last == None:
-                pass
+                self.state_change(line, current)
 
             elif ((current.ok != last.ok)
                 or (not current.ok and current.message != last.message)):
@@ -82,13 +96,13 @@ class MLBot:
         soup = BeautifulSoup(html, 'html.parser')
         status = {}
 
-        for line in self.LINE_NAMES:
-            el = soup.select('td.linha_%s li' % line.lower())[0]
+        for line in self.LINES:
+            el = soup.select('td.linha_%s li' % line.name.lower())[0]
 
             message = el.text
             ok = 'semperturbacao' in el.parent.get('class', [])
 
-            status[line] = MLStatus(
+            status[line.name] = MLStatus(
                 message=message,
                 ok=ok)
 
@@ -112,22 +126,52 @@ class MLBot:
         if not message.endswith('.'):
             message = message + '.'
 
-        self.publish("%s %s %s: %s %s" % (
+        self.publish("%s %s %s: %s" % (
             emoji,
             self.STRINGS["LINE"],
             line,
-            message,
-            self.STRINGS["APPEND"]))
+            message))
 
     def publish(self, message):
         """
-        Publishes a message to twitter. Trimmed if over 140 characters.
+        Publishes a message to twitter.
 
         :param message: Message to publish
         """
 
         self.log.info('Publishing to Twitter: %s', message)
-        self.twitter.PostUpdates(message, continuation='\u2026')
+
+        # add a timestamp to avoid duplicates
+        timestamp = time.strftime("[%H:%M]")
+
+        # split into tweets
+        parts = []
+        words = message.split(" ")
+        while len(words) > 0:
+            part = timestamp
+
+            while len(words) > 0:
+                joined = part + " " + words[0]
+                if len(joined) < 130:
+                    part = joined
+                    words.pop(0)
+                else:
+                    break
+
+            parts.append(part)
+
+        for part in parts:
+            try:
+                self.twitter.PostUpdate(part)
+            except TwitterError as e:
+                error = e.message
+                if (len(error) > 0 and
+                    error[0].get('code') == 187):
+
+                    # Duplicate? Add a dot.
+                    self.publish(message + '.')
+                else:
+                    raise e
 
 if __name__ == '__main__':
     # set up logger
