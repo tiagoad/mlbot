@@ -3,6 +3,7 @@ import logging
 import os
 import pickle
 import time
+import pytz
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
@@ -22,6 +23,7 @@ class MLStatus:
         self.ok = ok
 
 class MLBot:
+    TIMEZONE = 'Europe/Lisbon'
     STATUS_URL = 'http://app.metrolisboa.pt/status/estado_Linhas.php'
     LINES = [
         Line('Amarela', '\U0001F34B'),
@@ -47,6 +49,8 @@ class MLBot:
 
         self.twitter = twitter.Api(**api_credentials)
         self.twitter.VerifyCredentials()
+
+        self.tz = pytz.timezone(self.TIMEZONE)
 
         self.log = logging.getLogger('mlbot')
 
@@ -142,7 +146,9 @@ class MLBot:
         self.log.info('Publishing to Twitter: %s', message)
 
         # add a timestamp to avoid duplicates
-        timestamp = time.strftime("[%H:%M]")
+        now = datetime.datetime.now()
+        now_tz = self.tz.localize(now)
+        timestamp = now_tz.strftime("[%H:%M]")
 
         # split into tweets
         parts = []
@@ -152,7 +158,7 @@ class MLBot:
 
             while len(words) > 0:
                 joined = part + " " + words[0]
-                if len(joined) < 130:
+                if len(joined) < 270:
                     part = joined
                     words.pop(0)
                 else:
