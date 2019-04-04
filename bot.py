@@ -147,7 +147,7 @@ class MLBot:
 
         # add a timestamp to avoid duplicates
         now = datetime.datetime.now()
-        now_tz = self.tz.localize(now)
+        now_tz = pytz.utc.localize(now).astimezone(self.tz)
         timestamp = now_tz.strftime("[%H:%M]")
 
         # split into tweets
