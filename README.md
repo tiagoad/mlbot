@@ -11,6 +11,7 @@ If an `env` file exists with `KEY=VALUE` mappings for the environment variables:
 ## Environment Variables
 
 * `BOT_DEBUG` - Debug output if set
+* `BOT_PRETEND` - Output data to command-line, instead of sending to Twitter
 * `RUN_INTERVAL` - Interval between runs, in seconds (defaults to 120 seconds)
 * `TWITTER_CONSUMER_KEY` - Twitter consumer key
 * `TWITTER_CONSUMER_SECRET` - Twitter consumer secret

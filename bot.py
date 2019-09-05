@@ -38,7 +38,7 @@ class MLBot:
         "DOWN_EMOJI": "\U0001F534"
     }
 
-    def __init__(self, state_file, api_credentials):
+    def __init__(self, state_file, api_credentials, pretend=False):
         """
         Initializes a bot instance
 
@@ -46,6 +46,7 @@ class MLBot:
         :param api_credentials: Twitter API credentials
         """
         self.state_file = state_file
+        self.pretend = pretend
 
         self.twitter = twitter.Api(**api_credentials)
         self.twitter.VerifyCredentials()
@@ -168,7 +169,9 @@ class MLBot:
 
         for part in parts:
             try:
-                self.twitter.PostUpdate(part)
+                if not self.pretend:
+                    self.twitter.PostUpdate(part)
+                    
             except TwitterError as e:
                 error = e.message
                 if (len(error) > 0 and
@@ -183,9 +186,13 @@ if __name__ == '__main__':
     # set up logger
     logging.basicConfig(
         format="%(asctime)-15s %(levelname)-9s %(message)s")
+        
+        
+    debug_mode = os.environ.get('BOT_DEBUG', '0') == '1'
+    pretend_mode = os.environ.get('BOT_PRETEND', '0') == '1'
 
-    log = logging.getLogger('mlbot')
-    log.setLevel(logging.DEBUG if 'BOT_DEBUG' in os.environ else logging.INFO)
+    log = logging.getLogger('mlbot')    
+    log.setLevel(logging.DEBUG debug_mode else logging.INFO)
 
     try:
         state_file = os.environ['BOT_STATE_FILE']
@@ -197,7 +204,7 @@ if __name__ == '__main__':
             'access_token_secret': os.environ['TWITTER_ACCESS_TOKEN_SECRET'],
         }
 
-        bot = MLBot(state_file, api_credentials)
+        bot = MLBot(state_file, api_credentials, pretend=pretend_mode)
         bot.check()
 
     except KeyError as e:
