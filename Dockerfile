@@ -1,4 +1,4 @@
-FROM python:3.6.1-alpine
+FROM python:3.7-alpine
 
 # Set the environment variables
 ENV BOT_STATE_FILE /state/status.dat
