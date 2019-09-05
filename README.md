@@ -1,6 +1,6 @@
 # MLBOT
 
-Posts the Lisbon Metro status updates to Twitter.
+Posts the Lisbon Metro status updates to Twitter and Telegram.
 Written for use with Docker.
 
 ## Running
@@ -17,6 +17,8 @@ If an `env` file exists with `KEY=VALUE` mappings for the environment variables:
 * `TWITTER_CONSUMER_SECRET` - Twitter consumer secret
 * `TWITTER_ACCESS_TOKEN_KEY` - Twitter access token
 * `TWITTER_ACCESS_TOKEN_SECRET` - Twitter access token secret
+* `TELEGRAM_KEY` - Telegram bot API key
+* `TELEGRAM_DESTINATION` - Comma-separated list of telegram channel/group names and IDs
 
 ## Directories
 

@@ -5,6 +5,7 @@ import pickle
 import time
 import pytz
 from urllib.request import urlopen
+from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
 from enum import Enum
@@ -38,18 +39,22 @@ class MLBot:
         "DOWN_EMOJI": "\U0001F534"
     }
 
-    def __init__(self, state_file, api_credentials, pretend=False):
+    def __init__(self, state_file, twitter_config, telegram_config, pretend=False):
         """
         Initializes a bot instance
 
         :param state_file: File where state will be stored
-        :param api_credentials: Twitter API credentials
+        :param twitter_config: Twitter configuration
+        :param telegram_config: Telegram configuration
         """
         self.state_file = state_file
         self.pretend = pretend
 
-        self.twitter = twitter.Api(**api_credentials)
-        self.twitter.VerifyCredentials()
+        if not self.pretend:
+            self.twitter = twitter.Api(**twitter_config)
+            self.twitter.VerifyCredentials()
+        
+        self.telegram_config = telegram_config
 
         self.tz = pytz.timezone(self.TIMEZONE)
 
@@ -136,15 +141,37 @@ class MLBot:
             self.STRINGS["LINE"],
             line,
             message))
-
+            
     def publish(self, message):
+        self.log.info('Publishing: %s', message)
+                
+        self.publish_twitter(message)
+        self.publish_telegram(message)
+
+    def publish_telegram(self, message):
+        """
+        Publishes a message to telegram.
+        
+        :param message: Message to publish
+        """
+        
+        key = self.telegram_config['api_key']
+        
+        for dst in self.telegram_config['destination']:
+            data = urlencode(dict(
+                chat_id=dst,
+                parse_mode='HTML',
+                text=message
+            )).encode('utf-8')
+                    
+            res = urlopen(f'https://api.telegram.org/bot{key}/sendMessage', data=data)
+
+    def publish_twitter(self, message):
         """
         Publishes a message to twitter.
 
         :param message: Message to publish
         """
-
-        self.log.info('Publishing to Twitter: %s', message)
 
         # add a timestamp to avoid duplicates
         now = datetime.datetime.now()
@@ -178,7 +205,7 @@ class MLBot:
                     error[0].get('code') == 187):
 
                     # Duplicate? Add a dot.
-                    self.publish(message + '.')
+                    self.publish_twitter(message + '.')
                 else:
                     raise e
 
@@ -188,24 +215,29 @@ if __name__ == '__main__':
         format="%(asctime)-15s %(levelname)-9s %(message)s")
         
         
-    debug_mode = os.environ.get('BOT_DEBUG', '0') == '1'
-    pretend_mode = os.environ.get('BOT_PRETEND', '0') == '1'
+    debug = os.environ.get('BOT_DEBUG', '0') == '1'
+    pretend = os.environ.get('BOT_PRETEND', '0') == '1'
 
     log = logging.getLogger('mlbot')    
-    log.setLevel(logging.DEBUG debug_mode else logging.INFO)
+    log.setLevel(logging.DEBUG if debug else logging.INFO)
 
     try:
         state_file = os.environ['BOT_STATE_FILE']
 
-        api_credentials = {
-            'consumer_key': os.environ['TWITTER_CONSUMER_KEY'],
-            'consumer_secret': os.environ['TWITTER_CONSUMER_SECRET'],
-            'access_token_key': os.environ['TWITTER_ACCESS_TOKEN_KEY'],
-            'access_token_secret': os.environ['TWITTER_ACCESS_TOKEN_SECRET'],
-        }
-
-        bot = MLBot(state_file, api_credentials, pretend=pretend_mode)
-        bot.check()
-
+        bot = MLBot(
+            state_file, 
+            twitter_config=dict(
+                consumer_key=os.environ['TWITTER_CONSUMER_KEY'],
+                consumer_secret=os.environ['TWITTER_CONSUMER_SECRET'],
+                access_token_key=os.environ['TWITTER_ACCESS_TOKEN_KEY'],
+                access_token_secret=os.environ['TWITTER_ACCESS_TOKEN_SECRET']
+            ) if not pretend else {},
+            telegram_config=dict(
+                api_key=os.environ['TELEGRAM_KEY'],
+                destination=os.environ['TELEGRAM_DESTINATION'].split(',')
+            ),
+            pretend=pretend)
     except KeyError as e:
         log.critical('Environment variable %s not found.' % e)
+        
+    bot.check()
